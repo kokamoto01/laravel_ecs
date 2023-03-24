@@ -1,0 +1,33 @@
+version: '3'
+services:
+  terraform: # Terraformコンテナ
+    container_name: terraform
+    image: hashicorp/terraform:1.2.8
+    env_file:
+      - .env
+    volumes:
+      - ./tf:/workdir # ローカルのtfフォルダをDockerの/workdirディレクトリとしてマウント
+      - ../.aws:/.aws # ローカルの.awsからクレデンシャル情報を持ってくる 
+    working_dir: /workdir # docker-compose execコマンドの内容は/workdirで実行
+    entrypoint: ash
+    tty: true
+
+  app: # PHP(Laravel)コンテナ
+    container_name: app
+    image: training-app
+    build: 
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    volumes:
+      - ./src:/var/www/html/app
+
+  web: # Nginxコンテナ
+    container_name: web
+    image: training-web
+    build: 
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    ports:
+      - 8080:80
+    volumes:
+      - ./src:/var/www/html/app
